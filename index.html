@@ -211,20 +211,20 @@ https://cdn1.suno.ai/2b113c7a-049b-4055-9a42-f025df38cc01.m4a
         }
 
         // Start on user interaction (required by browsers)
+        let isStarted = false;
         document.addEventListener('click', () => {
-            if (audioContext.state === 'suspended') {
-                audioContext.resume();
+            if (!isStarted) {
+                isStarted = true;
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+                if (playlist.length > 0) {
+                    playNextTrack();
+                }
             }
-            if (audio.paused && playlist.length > 0) {
-                playNextTrack();
-            }
-        }, { once: true });
+        });
 
-        // Auto-start if possible
-        if (playlist.length > 0) {
-            playNextTrack();
-        }
-
+        // Remove auto-start attempt since browsers block it
         draw();
     </script>
 </body>
