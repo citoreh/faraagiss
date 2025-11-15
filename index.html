@@ -67,11 +67,12 @@
         const audioUrls = [
             // Example format - replace with your actual URLs:
             https://cdn1.suno.ai/9209a0c1-6eeb-44f6-8de9-5d97c275d159.m4a
-            https://cdn1.suno.ai/c9459ab9-f206-4bb5-a1ca-82f6f0d914e9.m4a
-        https://cdn1.suno.ai/0fe73e20-5ede-4c33-9ede-b2711cf5cae6.m4a
-        https://cdn1.suno.ai/255caf1b-abb0-471f-9500-d2bc32bc539e.m4a
-        https://cdn1.suno.ai/11bc9399-6170-4e63-9556-0d381b73efcb.m4a
-        https://cdn1.suno.ai/2b113c7a-049b-4055-9a42-f025df38cc01.m4a
+https://cdn1.suno.ai/c9459ab9-f206-4bb5-a1ca-82f6f0d914e9.m4a
+https://cdn1.suno.ai/0fe73e20-5ede-4c33-9ede-b2711cf5cae6.m4a
+https://cdn1.suno.ai/255caf1b-abb0-471f-9500-d2bc32bc539e.m4a
+https://cdn1.suno.ai/11bc9399-6170-4e63-9556-0d381b73efcb.m4a
+https://cdn1.suno.ai/2b113c7a-049b-4055-9a42-f025df38cc01.m4a
+            // 'https://your-audio-url-1.mp3',
             // 'https://your-audio-url-2.mp3',
             // 'https://your-audio-url-3.mp3',
         ];
@@ -91,6 +92,13 @@
         
         const audio = new Audio();
         audio.crossOrigin = "anonymous";
+        audio.preload = "auto";
+        
+        // Check M4A support
+        const canPlayM4A = audio.canPlayType('audio/mp4; codecs="mp4a.40.2"') !== '';
+        if (!canPlayM4A) {
+            console.warn('M4A support may be limited on this browser');
+        }
         
         // Audio context and analyser
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -120,13 +128,27 @@
             if (playlist.length === 0) return;
             
             audio.src = playlist[currentTrackIndex];
-            audio.play().catch(e => console.log('Playback failed:', e));
+            audio.load(); // Force load for M4A files
+            audio.play().catch(e => {
+                console.log('Playback failed:', e);
+                // Try next track if current fails
+                currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+                if (currentTrackIndex !== 0) {
+                    setTimeout(playNextTrack, 500);
+                }
+            });
             
             currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
         }
 
         // Auto-play next track when current ends
         audio.addEventListener('ended', playNextTrack);
+        
+        // Handle errors and skip to next track
+        audio.addEventListener('error', (e) => {
+            console.log('Audio error, skipping to next track');
+            playNextTrack();
+        });
 
         // Visualizer animation
         let hue = 0;
